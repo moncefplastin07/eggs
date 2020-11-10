@@ -24,9 +24,8 @@ export function matchFiles(
   let matched: MatchedFile[] = [];
 
   if (config.files) {
-    config.files.push(config.entry);
-    for (let file of config.files) {
-      let matches = [
+    for (const file of [config.entry, ...config.files]) {
+      const matches = [
         ...expandGlobSync(file, {
           root: Deno.cwd(),
           extended: true,
@@ -34,7 +33,7 @@ export function matchFiles(
       ]
         .map((file) => ({
           fullPath: file.path.replace(/\\/g, "/"),
-          path: "/" + relative(Deno.cwd(), file.path).replace(/\\/g, "/"),
+          path: "./" + relative(Deno.cwd(), file.path).replace(/\\/g, "/"),
           lstat: Deno.lstatSync(file.path),
         }));
       if (matches.length === 0) {
@@ -50,7 +49,7 @@ export function matchFiles(
   } else {
     (ignore as Ignore).accepts.push(globToRegExp(config.entry));
     for (const entry of walkSync(".")) {
-      const path = "/" + entry.path.replace(/\\/g, "/");
+      const path = "./" + entry.path.replace(/\\/g, "/");
       const fullPath = resolve(entry.path);
       const lstat = Deno.lstatSync(entry.path);
       const file: MatchedFile = {
@@ -63,8 +62,13 @@ export function matchFiles(
   }
 
   matched = matched.filter((file) => file.lstat.isFile).filter((file) => {
-    if (ignore?.denies.some((rgx) => rgx.test(file.path.substr(1)))) {
-      return ignore.accepts.some((rgx) => rgx.test(file.path.substr(1)));
+    if (
+      ignore?.denies.some((rgx) =>
+        // check for "./" and ""
+        rgx.test(file.path) || rgx.test(file.path.substr(2))
+      )
+    ) {
+      return ignore.accepts.some((rgx) => rgx.test(file.path));
     }
     return true;
   });

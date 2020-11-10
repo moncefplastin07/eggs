@@ -4,7 +4,7 @@ import { parseIgnore } from "./ignore.ts";
 Deno.test({
   name: "internal | ignore | parsing",
   fn(): void {
-    let matched = parseIgnore(`
+    const matched = parseIgnore(`
 extends .gitignore
 extends ./dir/*
 .git/*
@@ -13,6 +13,7 @@ foo
    foo
    f o o
    f\\ o\\  o
+./foo
 foo/
 foo/bar
 !test/should_keep_this.ts
@@ -30,7 +31,8 @@ foo/bar
           /^(?:[^\\/]*(?:\\|\/|$)+)*foo(?:\\|\/)*$/,
           /^(?:[^\\/]*(?:\\|\/|$)+)*foo(?:\\|\/)*$/,
           /^(?:[^\\/]*(?:\\|\/|$)+)*f o o(?:\\|\/)*$/,
-          /^(?:[^\\/]*(?:\\|\/|$)+)*foo(?:\\|\/)+(?:[^\\/]*(?:\\|\/|$)+)*(?:\\|\/)*$/,
+          /^\.(?:\\|\/)+foo(?:\\|\/)*$/,
+          /^(?:[^\\/]*(?:\\|\/|$)+)*foo(?:\\|\/)+(?:[^\\/]*(?:\\|\/|$)+)*$/,
           /^foo(?:\\|\/)+bar(?:\\|\/)*$/,
           /^\!test(?:\\|\/)+should_ignore_this\.ts(?:\\|\/)*$/,
         ],
@@ -49,7 +51,8 @@ foo/bar
           /^(?:[^/]*(?:\/|$)+)*foo\/*$/,
           /^(?:[^/]*(?:\/|$)+)*foo\/*$/,
           /^(?:[^/]*(?:\/|$)+)*f o o\/*$/,
-          /^(?:[^/]*(?:\/|$)+)*foo\/+(?:[^/]*(?:\/|$)+)*\/*$/,
+          /^\.\/+foo\/*$/,
+          /^(?:[^/]*(?:\/|$)+)*foo\/+(?:[^/]*(?:\/|$)+)*$/,
           /^foo\/+bar\/*$/,
           /^\!test\/+should_ignore_this\.ts\/*$/,
         ],
